@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Gtk;
 
 namespace PrjCreator
@@ -6,15 +7,23 @@ namespace PrjCreator
     public class MWindow
     {
         private Window myWin;
-
+        Statusbar statusBar = new Statusbar();
+        
         public MWindow()
         {
+            //имя, как указали в css файле, только без #
+            const string neonWidget = "neon-widget";
+            
             myWin = new Window("My first GTK# Application! ");
             myWin.Resize(200,200);
             myWin.DeleteEvent += DelEv;
 
+            //вызываем функцию, которая подгрузит css файлик по заданному пути (реализация в конце текущего файла)
+            LoadCss("CSS\\style.css");
 
             MenuBar menuBar = new MenuBar();
+            //указываем Name с помощью переменной с именем из файла css
+            menuBar.Name = neonWidget;
             
             Menu fMenu = new Menu();
             MenuItem fMenuRootItem = new MenuItem();
@@ -24,11 +33,13 @@ namespace PrjCreator
             MenuItem fMenuOpenItem = new MenuItem();
             fMenuOpenItem.Label = "Открыть";
             fMenuOpenItem.Activated += OnClick;
+            //указываем Name с помощью переменной с именем из файла css
+            fMenuOpenItem.Name = neonWidget;
             fMenu.Append(fMenuOpenItem);
 
             menuBar.Append(fMenuRootItem);
 
-            Statusbar statusBar = new Statusbar();
+            
 
             Label lb2 = new Label("lb2");
 
@@ -146,8 +157,45 @@ namespace PrjCreator
 
         private void OnClick(object sender, System.EventArgs e)
         {
-            FileChooserDialog dlg = new FileChooserDialog("title", myWin, FileChooserAction.Open, "qwe");
-            dlg.Show(); 
+            //создаем диалог выбора файла
+            //указываем его название
+            //указваем родительское окно (вроде как)
+            //говорим, что это окно будет использоваться для открытия файлов
+            //указываем названия (хотя, наверное, скорее просто лейблы) и значения, которые вернутся при их нажатии
+            FileChooserDialog dlg = new FileChooserDialog("title", myWin, FileChooserAction.Open,
+                "Open", ResponseType.Accept, "Отмена", ResponseType.Cancel);
+            //показываем все элементы диалогового окна dlg
+            dlg.ShowAll(); 
+            
+            //проверка (ощущение, что прямиком из чистого си) значения, которое вернулось от кнопочек окна
+            //а точнее, проверка, вернулось ли значение Accept (т.е. была ли нажата кнопка с лейблом Open)
+            if (dlg.Run() == (int)ResponseType.Accept)
+            {
+                //помещаем в статусбар сообщение о том, какой файл был открыт
+                statusBar.Push(0, $"Открыт файл: {dlg.Filename}");
+            }
+            
+            //убираем после этого окно dlg
+            dlg.Destroy();
+        }
+
+        //функция для подгрузки css из файлика по пути path
+        private void LoadCss(string path)
+        {
+            //создаем новый CssProvider, в который будут отправляться данные из css файла
+            CssProvider css = new CssProvider();
+
+            //добавляем созданный CssProvider дефолтному экрану с максимальным (вроде бы) приоритетом User
+            Gtk.StyleContext.AddProviderForScreen(Gdk.Screen.Default, css, Gtk.StyleProviderPriority.User);
+
+            //строка, в которцю будем считывать css
+            string cssStyles = "";
+
+            //читаем файл css по пути path в строку cssStyles
+            cssStyles = File.ReadAllText(path);
+            
+            //ну и отправляем данные из строки с содержимым css файла в CssProvider
+            css.LoadFromData(cssStyles);
         }
     }
 }

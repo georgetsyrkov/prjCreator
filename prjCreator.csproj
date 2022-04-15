@@ -11,4 +11,10 @@
     <PackageReference Include="GtkSharp" Version="3.24.24.34" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="CSS\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
